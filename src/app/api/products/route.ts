@@ -26,33 +26,18 @@ export async function GET(request: NextRequest) {
 // POST /api/products - Create a new product
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    
-    // Validate required fields
-    if (!body.name || !body.price) {
-      return NextResponse.json(
-        { error: 'Name and price are required' },
-        { status: 400 }
-      );
-    }
-    
-    const product = {
-      id: Date.now().toString(), // Using timestamp as ID
-      name: body.name,
-      price: body.price,
-      createdAt: new Date().toISOString(),
+    const product = await request.json();
+
+    const params = {
+      TableName: "shopify_inkhub_get_products",
+      Item: product
     };
 
-    const command = new PutCommand({
-      TableName: TABLE_NAME,
-      Item: product,
-    });
+    await dynamoDb.send(new PutCommand(params));
 
-    await dynamoDb.send(command);
-    
     return NextResponse.json(product, { status: 201 });
   } catch (error) {
-    console.error('Failed to create product:', error);
+    console.error('Error creating product:', error);
     return NextResponse.json(
       { error: 'Failed to create product' },
       { status: 500 }
